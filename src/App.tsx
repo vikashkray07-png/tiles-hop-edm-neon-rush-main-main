@@ -47,8 +47,6 @@ export default function App() {
   // Online / Offline state. Android WebView can report navigator.onLine=true
   // even when mobile data/Wi-Fi has no internet, so confirm reachability too.
   const [isOnline, setIsOnline] = useState<boolean>(false);
-  const isOnlineRef = useRef(false);
-  isOnlineRef.current = isOnline;
   useEffect(() => {
     let disposed = false;
     let probeInFlight = false;
@@ -374,12 +372,33 @@ export default function App() {
           1,
           Math.min(LEVELS.length, Math.max(Number(activeProgress.maxUnlockedLevel) || 1, normalizedSelectedLevel))
         );
+        const unlockedSkinsWithoutAds = activeProgress.unlockedSkins.filter((skinId) =>
+          BALL_SKINS.some((skin) => skin.id === skinId && skin.unlockType !== 'ads')
+        );
+        const selectedSkinWithoutAds = BALL_SKINS.some((skin) =>
+          skin.id === activeProgress.selectedSkin &&
+          skin.unlockType !== 'ads' &&
+          unlockedSkinsWithoutAds.includes(skin.id)
+        ) ? activeProgress.selectedSkin : 'earth-ball';
+        const hadLegacyAdSkinProgress =
+          unlockedSkinsWithoutAds.length !== activeProgress.unlockedSkins.length ||
+          selectedSkinWithoutAds !== activeProgress.selectedSkin;
+
         activeProgress = {
           ...activeProgress,
           selectedLevel: normalizedSelectedLevel,
           maxUnlockedLevel: normalizedMaxUnlockedLevel,
+          unlockedSkins: unlockedSkinsWithoutAds,
+          selectedSkin: selectedSkinWithoutAds,
         };
         saveLocalPlayerProgress(activeProgress, uid);
+        if (cloudReadSucceeded && hadLegacyAdSkinProgress) {
+          try {
+            await syncCloudPlayerProgress(uid, activeProgress);
+          } catch (syncError) {
+            console.warn('[App] Could not reconcile removed legacy ad-skin unlocks yet:', syncError);
+          }
+        }
         if (cloudReadSucceeded && normalizedMaxUnlockedLevel > (cloudProgress?.maxUnlockedLevel || 1)) {
           try {
             await syncCloudPlayerProgress(uid, activeProgress);
@@ -1212,7 +1231,7 @@ export default function App() {
     syncRef.current(stats.totalCumulativeScore, maxUnlockedLevel, stats.totalGems);
   };
 
-  // Unlock Skin using Gold Coins (If online: play 1 ad before grant; If offline: grant directly)
+  // Unlock Skin using Gold Coins
   const handleUnlockSkin = (skin: BallSkin) => {
     const cost = skin.costCoins ?? skin.cost ?? 150;
     if (stats.totalCoins < cost) {
