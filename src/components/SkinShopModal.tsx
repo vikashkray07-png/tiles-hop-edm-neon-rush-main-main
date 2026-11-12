@@ -151,11 +151,7 @@ export const SkinShopModal: React.FC<SkinShopModalProps> = ({
 
         {/* Footer */}
         <div className="pt-2 text-center text-[11px] text-white/40 border-t border-white/5">
-          {isOnline ? (
-            <span>Premium ad skins are temporarily unavailable. Coin skins remain available.</span>
-          ) : (
-            
-          )}
+          <span>Premium ad skins are temporarily unavailable. Coin skins remain available.</span>
         </div>
       </div>
     </div>
