@@ -5,6 +5,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GameEngine } from './game/GameEngine';
+import { initializeTestAds, showRewardedTestAd, showInterstitialTestAd } from './lib/admob;
 import { GameHUD } from './components/GameHUD';
 import { TitleScreen } from './components/TitleScreen';
 import { GameOverModal } from './components/GameOverModal';
@@ -112,6 +113,7 @@ export default function App() {
   }, []);
 
   const [phase, setPhase] = useState<GamePhase>('title');
+  const [isReviving, setIsReviving] = useState(false);
 
   // Modals
   const [showShop, setShowShop] = useState(false);
@@ -977,8 +979,10 @@ export default function App() {
         const shouldShowReview = completedLevel.id === 2 && !localStorage.getItem('going_hop_reviewed_v22');
 
         setPhase('victory');
+        // A failed/unavailable interstitial is ignored; gameplay and progression are already complete.
+        window.setTimeout(() => { void showInterstitialTestAd(); }, 500);
 
-        // Ads are temporarily disabled. Keep the existing review prompt flow.
+        // Keep the existing review prompt flow.
         if (shouldShowReview) {
           window.setTimeout(() => setShowReviewModal(true), 500);
         }
@@ -989,6 +993,8 @@ export default function App() {
     });
 
     engineRef.current = engine;
+    // Start consent-first Google Test Ads only after the native game view exists.
+    void initializeTestAds();
 
     return () => {
       engine.destroy();
@@ -1150,6 +1156,22 @@ export default function App() {
       setIsDailyChallenge(false);
       isDailyChallengeRef.current = false;
       engineRef.current?.startGame();
+    }
+  };
+
+  const handleRevive = async () => {
+    if (isReviving || phase !== 'gameover' || isDailyChallenge) return;
+    setIsReviving(true);
+    try {
+      const earned = await showRewardedTestAd();
+      if (!earned) return;
+      const engine = engineRef.current;
+      if (!engine) return;
+      engine.reviveAtCurrentPlatform();
+      setPhase('playing');
+      setGameOverModalData(null);
+    } finally {
+      setIsReviving(false);
     }
   };
 
@@ -1436,6 +1458,8 @@ export default function App() {
           }
           isVictory={phase === 'victory'}
           onPlayAgain={handlePlayAgain}
+          onRevive={handleRevive}
+          isReviving={isReviving}
           onNextLevel={
             (phase === 'victory'
               ? victoryModalData?.level || currentLevel
