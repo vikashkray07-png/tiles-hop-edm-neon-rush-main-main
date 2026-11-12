@@ -1,0 +1,6 @@
+{
+  "name": "Tiles Hop: EDM Neon Rush",
+  "description": "An electrifying 3D rhythm hopping game inspired by Tiles Hop. Hop to the beat, hit the center diamonds, rack up combos, and ride the neon rush!",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidClaimId(id) {
+      return id is string && id.size() > 0 && id.size() <= 160 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Strict schema & range validation for Leaderboard & Persistent Player Profiles
+    function isValidLeaderboardEntry(data, uid) {
+      return data.keys().hasAll(['id', 'name', 'gems', 'level', 'updatedAt']) &&
+             data.keys().hasOnly(['id', 'name', 'country', 'flag', 'gems', 'score', 'level', 'coins', 'maxUnlockedLevel', 'selectedLevel', 'unlockedSkins', 'selectedSkin', 'resetVersion', 'updatedAt', 'createdAt', 'userId', 'hasRegisteredProfile', 'profileVersion']) &&
+             data.id is string && data.id == uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 50 &&
+             (!('country' in data) || (data.country is string && data.country.size() <= 64)) &&
+             (!('flag' in data) || (data.flag is string && data.flag.size() <= 16)) &&
+             data.gems is number && data.gems >= 0 && data.gems <= 10000000 &&
+             (!('score' in data) || (data.score is number && data.score >= 0 && data.score <= 50000000)) &&
+             data.level is number && data.level >= 1 && data.level <= 150 &&
+             (!('coins' in data) || (data.coins is number && data.coins >= 0 && data.coins <= 10000000)) &&
+             (!('maxUnlockedLevel' in data) || (data.maxUnlockedLevel is number && data.maxUnlockedLevel >= 1 && data.maxUnlockedLevel <= 150)) &&
+             (!('selectedLevel' in data) || (data.selectedLevel is number && data.selectedLevel >= 1 && data.selectedLevel <= 150)) &&
+             (!('selectedSkin' in data) || (data.selectedSkin is string && data.selectedSkin.size() <= 64)) &&
+             (!('unlockedSkins' in data) || (data.unlockedSkins is list && data.unlockedSkins.size() <= 20)) &&
+             (!('resetVersion' in data) || (data.resetVersion is number && data.resetVersion >= 0 && data.resetVersion <= 100)) &&
+             (!('hasRegisteredProfile' in data) || data.hasRegisteredProfile is bool) &&
+             (!('profileVersion' in data) || (data.profileVersion is number && data.profileVersion >= 1 && data.profileVersion <= 100)) &&
+             (!('createdAt' in data) || data.createdAt is number) &&
+             (!('userId' in data) || (data.userId is string && data.userId.size() <= 128)) &&
+             data.updatedAt is number;
+    }
+
+    // Strict schema & validation for Daily Challenge Reward Claims
+    function isValidDailyRewardClaim(data, uid, claimId) {
+      return data.keys().hasAll(['id', 'uid', 'date', 'claimed', 'position', 'gemsAwarded', 'claimedAt']) &&
+             data.keys().hasOnly(['id', 'uid', 'date', 'claimed', 'position', 'gemsAwarded', 'claimedAt']) &&
+             data.id == claimId &&
+             data.uid == uid &&
+             data.date is string && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+             claimId == uid + '_' + data.date &&
+             data.claimed == true &&
+             data.position is number && data.position >= 1 && data.position <= 10 &&
+             data.gemsAwarded is number && (data.gemsAwarded == 50 || data.gemsAwarded == 15 || data.gemsAwarded == 0) &&
+             data.claimedAt is number;
+    }
+
+    match /leaderboard/{playerId} {
+      // Authenticated players can read the shared global leaderboard
+      allow read: if isSignedIn();
+
+      // Players can ONLY create or update their own document matching request.auth.uid
+      allow create: if isSignedIn() &&
+                       isValidId(playerId) &&
+                       playerId == request.auth.uid &&
+                       isValidLeaderboardEntry(incoming(), request.auth.uid);
+
+      allow update: if isSignedIn() &&
+                       isValidId(playerId) &&
+                       playerId == request.auth.uid &&
+                       (!('id' in existing()) || incoming().id == existing().id) &&
+                       isValidLeaderboardEntry(incoming(), request.auth.uid);
+
+      // Only the document owner can delete their own entry
+      allow delete: if isSignedIn() && playerId == request.auth.uid;
+    }
+
+    match /dailyRewards/{claimId} {
+      // Only the authenticated owner can read their own daily reward claim
+      allow read: if isSignedIn() &&
+                     isValidClaimId(claimId) &&
+                     (claimId.matches('^' + request.auth.uid + '_.*') || resource.data.uid == request.auth.uid);
+
+      // Create once per day: document ID must be {uid}_{date}
+      allow create: if isSignedIn() &&
+                       isValidClaimId(claimId) &&
+                       incoming().uid == request.auth.uid &&
+                       claimId == request.auth.uid + '_' + incoming().date &&
+                       isValidDailyRewardClaim(incoming(), request.auth.uid, claimId);
+
+      // Permanent and immutable: disallow update or deletion
+      allow update, delete: if false;
+    }
+
+    match /test/{docId} {
+      allow read: if isSignedIn();
+    }
+  }
+}

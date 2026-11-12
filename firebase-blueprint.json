@@ -1,0 +1,117 @@
+{
+  "entities": {
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Global leaderboard entry for players ranked by total gems.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 50,
+          "minLength": 1
+        },
+        "country": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "flag": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "gems": {
+          "type": "number"
+        },
+        "score": {
+          "type": "number"
+        },
+        "level": {
+          "type": "number"
+        },
+        "coins": {
+          "type": "number"
+        },
+        "maxUnlockedLevel": {
+          "type": "number"
+        },
+        "selectedLevel": {
+          "type": "number"
+        },
+        "unlockedSkins": {
+          "type": "array"
+        },
+        "selectedSkin": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "resetVersion": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "number"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "name", "gems", "level", "updatedAt"]
+    },
+    "DailyRewardClaim": {
+      "title": "DailyRewardClaim",
+      "description": "Daily Challenge reward claim record for a player on a specific UTC calendar date.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 160,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "claimed": {
+          "type": "boolean"
+        },
+        "position": {
+          "type": "number"
+        },
+        "gemsAwarded": {
+          "type": "number"
+        },
+        "claimedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "uid", "date", "claimed", "position", "gemsAwarded", "claimedAt"]
+    }
+  },
+  "firestore": {
+    "leaderboard/{playerId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Global leaderboard documents keyed by unique player ID."
+    },
+    "dailyRewards/{claimId}": {
+      "schema": {
+        "$ref": "#/entities/DailyRewardClaim"
+      },
+      "description": "Daily Challenge reward claim records keyed by {uid}_{date}."
+    }
+  }
+}
