@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Check, Lock, Coins, Clapperboard, WifiOff } from 'lucide-react';
+import { X, Check, Lock, Coins } from 'lucide-react';
 import { BALL_SKINS } from '../data/skins';
 import { BallSkin } from '../types/game';
 import { soundEngine } from '../audio/SoundEngine';
@@ -7,20 +7,16 @@ import { soundEngine } from '../audio/SoundEngine';
 interface SkinShopModalProps {
   currentSkin: BallSkin;
   totalCoins: number;
-  isOnline?: boolean;
   onSelectSkin: (skin: BallSkin) => void;
   onUnlockSkin: (skin: BallSkin) => void;
-  onWatchSkinAd: (skin: BallSkin) => void;
   onClose: () => void;
 }
 
 export const SkinShopModal: React.FC<SkinShopModalProps> = ({
   currentSkin,
   totalCoins,
-  isOnline = true,
   onSelectSkin,
   onUnlockSkin,
-  onWatchSkinAd,
   onClose,
 }) => {
   return (
@@ -30,7 +26,7 @@ export const SkinShopModal: React.FC<SkinShopModalProps> = ({
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div>
             <h2 className="text-xl font-black text-white tracking-wide">BALL SKIN SHOP (10 SKINS)</h2>
-            <p className="text-xs text-white/50">Unlock via Gold Coins or Watch Rewarded Ads</p>
+            <p className="text-xs text-white/50">Unlock via Gold Coins · Premium skins temporarily locked</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -55,8 +51,6 @@ export const SkinShopModal: React.FC<SkinShopModalProps> = ({
             const isAdSkin = skin.unlockType === 'ads';
             const price = skin.costCoins ?? skin.cost ?? 0;
             const canAfford = totalCoins >= price;
-            const adsDone = skin.adsWatched || 0;
-            const adsNeed = skin.adsRequired || 2;
 
             return (
               <div
@@ -123,24 +117,9 @@ export const SkinShopModal: React.FC<SkinShopModalProps> = ({
                       </button>
                     )
                   ) : isAdSkin ? (
-                    /* Ad-Unlockable Skin (Requires 2 Ads) */
-                    isOnline ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onWatchSkinAd(skin);
-                        }}
-                        className="w-full py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black font-extrabold text-[11px] flex items-center justify-center gap-1 shadow-md active:scale-95 transition-all cursor-pointer"
-                      >
-                        <Clapperboard className="w-3.5 h-3.5 text-black" />
-                        <span>WATCH AD ({adsDone}/{adsNeed})</span>
-                      </button>
-                    ) : (
-                      <div className="w-full py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/30 text-[10px] font-bold flex items-center justify-center gap-1 cursor-not-allowed">
-                        <WifiOff className="w-3 h-3 text-white/30" />
-                        <span>NO INTERNET</span>
-                      </div>
-                    )
+                    <div className="w-full py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/40 text-[10px] font-bold flex items-center justify-center cursor-not-allowed">
+                      ADS TEMPORARILY DISABLED
+                    </div>
                   ) : (
                     /* Coin Purchase Skin */
                     <button
@@ -173,9 +152,9 @@ export const SkinShopModal: React.FC<SkinShopModalProps> = ({
         {/* Footer */}
         <div className="pt-2 text-center text-[11px] text-white/40 border-t border-white/5">
           {isOnline ? (
-            <span>🟢 Online mode active · Watch 2 ads to unlock premium skins for free!</span>
+            <span>Premium ad skins are temporarily unavailable. Coin skins remain available.</span>
           ) : (
-            <span>⚪ Offline mode active · Coin skins purchase directly without ads!</span>
+            
           )}
         </div>
       </div>
