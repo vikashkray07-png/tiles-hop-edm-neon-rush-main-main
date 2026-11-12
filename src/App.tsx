@@ -49,11 +49,6 @@ export default function App() {
   // even when mobile data/Wi-Fi has no internet, so confirm reachability too.
   const [isOnline, setIsOnline] = useState<boolean>(false);
 
-  // Keep one interstitial preloaded only while internet is reachable.
-  // Level completion itself must never start a network load.
-  useEffect(() => {
-    if (isOnline) void prepareInterstitialTestAd();
-  }, [isOnline]);
   useEffect(() => {
     let disposed = false;
     let probeInFlight = false;
@@ -1007,6 +1002,11 @@ export default function App() {
       engineRef.current = null;
     };
   }, []);
+
+  // Start ad preloading only after the game engine/native view has mounted.
+  useEffect(() => {
+    if (isOnline) void prepareInterstitialTestAd();
+  }, [isOnline]);
 
   // Let Three.js handle WebGL context restoration. Do not reload the whole
   // WebView after an ad closes: that can tear down the game and appear as a crash.
