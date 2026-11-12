@@ -1,15 +1,13 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { RotateCcw, Home, ArrowRight, Target, Clapperboard, WifiOff } from 'lucide-react';
+import { RotateCcw, Home, ArrowRight, Target } from 'lucide-react';
 import { GameStats, LevelConfig } from '../types/game';
 
 interface GameOverModalProps {
   stats: GameStats;
   currentLevel: LevelConfig;
   isVictory: boolean;
-  isOnline?: boolean;
   onPlayAgain: () => void;
-  onWatchAdContinue?: () => void;
   onNextLevel?: () => void;
   onGoHome: () => void;
 }
@@ -18,9 +16,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   stats,
   currentLevel,
   isVictory,
-  isOnline = true,
   onPlayAgain,
-  onWatchAdContinue,
   onNextLevel,
   onGoHome,
 }) => {
@@ -124,24 +120,6 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             <RotateCcw className="w-5 h-5" />
             <span>{isVictory ? 'REPLAY THIS LEVEL' : 'RETRY LEVEL'}</span>
           </button>
-
-          {/* Watch Ad To Continue / Revive Option */}
-          {!isVictory && onWatchAdContinue && (
-            isOnline ? (
-              <button
-                onClick={onWatchAdContinue}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-black font-black text-sm tracking-wider shadow-[0_0_25px_rgba(251,191,36,0.45)] transition-all transform hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Clapperboard className="w-5 h-5 text-black" />
-                <span>WATCH AD TO CONTINUE</span>
-              </button>
-            ) : (
-              <div className="w-full py-3 px-3 rounded-2xl bg-white/5 border border-white/10 text-white/40 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
-                <WifiOff className="w-4 h-4 text-white/30" />
-                <span>NO INTERNET CONNECTION</span>
-              </div>
-            )
-          )}
 
           <button
             onClick={onGoHome}
