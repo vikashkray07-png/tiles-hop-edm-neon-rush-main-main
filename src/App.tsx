@@ -11,8 +11,6 @@ import { GameOverModal } from './components/GameOverModal';
 import { SkinShopModal } from './components/SkinShopModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { LeaderboardModal } from './components/LeaderboardModal';
-import { AdModal, AdType } from './components/AdModal';
-import { hasReliableInternet } from './lib/admob';
 import { ReviewModal } from './components/ReviewModal';
 import { DailyChallengeModal } from './components/DailyChallengeModal';
 import { DailyRaceResultsModal } from './components/DailyRaceResultsModal';
@@ -138,25 +136,6 @@ export default function App() {
   const [isDailyChallenge, setIsDailyChallenge] = useState<boolean>(false);
   const isDailyChallengeRef = useRef(false);
   isDailyChallengeRef.current = isDailyChallenge;
-
-  // Ad Modal State
-  const [adModal, setAdModal] = useState<{
-    isOpen: boolean;
-    type: AdType;
-    skin?: BallSkin;
-    adNumber?: number;
-    totalAds?: number;
-    onComplete?: () => void;
-  }>({
-    isOpen: false,
-    type: 'level_complete',
-  });
-
-  useEffect(() => {
-    if (!isOnline) {
-      setAdModal((current) => current.isOpen ? { ...current, isOpen: false } : current);
-    }
-  }, [isOnline]);
 
   // Cached local progress for instant first frame
   const initialProgress = useRef<PlayerProgressState>(loadLocalPlayerProgress()).current;
@@ -980,34 +959,9 @@ export default function App() {
 
         setPhase('victory');
 
-        // Level-complete flow: Google test ad first (starts automatically),
-        // and the rating popup only AFTER the ad is finished. They never
-        // open together, so the screen cannot crash or go blank.
-        const showReviewLater = () => {
-          if (!shouldShowReview) return;
+        // Ads are temporarily disabled. Keep the existing review prompt flow.
+        if (shouldShowReview) {
           window.setTimeout(() => setShowReviewModal(true), 500);
-        };
-
-        // Do a fresh reachability check at the exact moment the level ends.
-        // Android WebView can keep navigator.onLine=true after Wi-Fi/mobile data
-        // has been switched off, which otherwise launches a blank AdMob screen.
-        const canShowLevelAd =
-          isOnlineRef.current &&
-          (typeof navigator === 'undefined' || navigator.onLine) &&
-          (await hasReliableInternet());
-
-        if (canShowLevelAd) {
-          const finishAd = () => {
-            setAdModal((prev) => ({ ...prev, isOpen: false }));
-            showReviewLater();
-          };
-          setAdModal({
-            isOpen: true,
-            type: 'level_complete',
-            onComplete: finishAd,
-          });
-        } else {
-          showReviewLater();
         }
       },
       onPhaseChange: (newPhase) => {
@@ -1217,7 +1171,6 @@ export default function App() {
     setShowDailyChallengeModal(false);
     setShowDailyRaceResultsModal(false);
     setDailyRaceResultsData(null);
-    setAdModal((prev) => ({ ...prev, isOpen: false }));
     setIsDailyChallenge(false);
     isDailyChallengeRef.current = false;
 
@@ -1257,60 +1210,6 @@ export default function App() {
     saveLocalPlayerProgress({ selectedSkin: skin.id }, canonicalPlayerId);
     engineRef.current?.setSkin(skin);
     syncRef.current(stats.totalCumulativeScore, maxUnlockedLevel, stats.totalGems);
-  };
-
-  // Watch Ad to Continue / Revive from Defeat
-  const handleWatchAdContinue = () => {
-    if (!isOnline) return;
-    setAdModal({
-      isOpen: true,
-      type: 'continue_revive',
-      onComplete: () => {
-        setAdModal((prev) => ({ ...prev, isOpen: false }));
-        setGameOverModalData(null);
-        engineRef.current?.reviveAtCurrentPlatform();
-      },
-    });
-  };
-
-  // Watch Ad to Unlock a Ball Skin (2 Ads required per skin)
-  const handleWatchSkinAd = (skin: BallSkin) => {
-    if (!isOnline) return;
-    const currentWatched = skin.adsWatched || 0;
-    const nextWatched = currentWatched + 1;
-
-    setAdModal({
-      isOpen: true,
-      type: 'skin_unlock',
-      skin,
-      adNumber: nextWatched,
-      totalAds: skin.adsRequired || 2,
-      onComplete: () => {
-        setAdModal((prev) => ({ ...prev, isOpen: false }));
-        skin.adsWatched = nextWatched;
-        try {
-          const adsMap = JSON.parse(localStorage.getItem('going_hop_skin_ads') || '{}');
-          adsMap[skin.id] = nextWatched;
-          localStorage.setItem('going_hop_skin_ads', JSON.stringify(adsMap));
-        } catch {
-          // ignore
-        }
-
-        if (nextWatched >= (skin.adsRequired || 2)) {
-          skin.unlocked = true;
-          const unlockedList = BALL_SKINS.filter((s) => s.unlocked).map((s) => s.id);
-          if (!unlockedList.includes(skin.id)) unlockedList.push(skin.id);
-          saveLocalPlayerProgress({
-            unlockedSkins: unlockedList,
-            selectedSkin: skin.id,
-          }, canonicalPlayerId);
-          handleSelectSkin(skin);
-          soundEngine.playLevelComplete();
-        } else {
-          soundEngine.playGemCollect();
-        }
-      },
-    });
   };
 
   // Unlock Skin using Gold Coins (If online: play 1 ad before grant; If offline: grant directly)
@@ -1517,9 +1416,7 @@ export default function App() {
               : gameOverModalData?.level || currentLevel
           }
           isVictory={phase === 'victory'}
-          isOnline={isOnline}
           onPlayAgain={handlePlayAgain}
-          onWatchAdContinue={handleWatchAdContinue}
           onNextLevel={
             (phase === 'victory'
               ? victoryModalData?.level || currentLevel
@@ -1561,10 +1458,8 @@ export default function App() {
         <SkinShopModal
           currentSkin={currentSkin}
           totalCoins={stats.totalCoins}
-          isOnline={isOnline}
           onSelectSkin={handleSelectSkin}
           onUnlockSkin={handleUnlockSkin}
-          onWatchSkinAd={handleWatchSkinAd}
           onClose={() => setShowShop(false)}
         />
       )}
@@ -1597,28 +1492,6 @@ export default function App() {
           onSave={handleSaveProfile}
           onResetProgression={handleResetProgression}
           accountUid={canonicalPlayerId}
-        />
-      )}
-
-      {/* Monetized Rewarded & Interstitial Ad Modal */}
-      {adModal.isOpen && (
-        <AdModal
-          type={adModal.type}
-          skinName={adModal.skin?.name}
-          adNumber={adModal.adNumber}
-          totalAds={adModal.totalAds}
-          onComplete={() => {
-            adModal.onComplete?.();
-          }}
-          onClose={() => {
-            if (adModal.type === 'level_complete') {
-              // Closing the level-complete ad continues to the normal next step
-              // (rating popup, if due).
-              adModal.onComplete?.();
-            } else {
-              setAdModal((prev) => ({ ...prev, isOpen: false }));
-            }
-          }}
         />
       )}
 
