@@ -1,0 +1,9 @@
+ <resources>
+    <string name="app_name">Tiles Hop EDM Neon Rush</string>
+    <string name="title_activity_main">Tiles Hop EDM Neon Rush</string>
+    <string name="package_name">com.tileshop.edmneonrush</string>
+    <string name="custom_url_scheme">com.tileshop.edmneonrush</string>
+
+    <!-- Google AdMob TEST App ID -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+</resources>
