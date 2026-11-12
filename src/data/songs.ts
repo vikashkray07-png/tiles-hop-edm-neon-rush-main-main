@@ -1,0 +1,68 @@
+import { SongTrack } from '../types/game';
+
+export const SONG_TRACKS: SongTrack[] = [
+  {
+    id: 'cyber-neon-rush',
+    title: 'Neon Horizon Rush',
+    artist: 'CyberBeat 3000',
+    bpm: 128,
+    durationSeconds: 95,
+    difficulty: 'EASY',
+    scale: [60, 63, 65, 67, 70, 72, 75],
+    colorTheme: {
+      primary: '#ff1d68',
+      secondary: '#00f5ff',
+      backgroundTop: '#0a0320',
+      backgroundBottom: '#18073b',
+      fogColor: 0x0c0424,
+    },
+  },
+  {
+    id: 'electric-euphoria',
+    title: 'Electric Euphoria',
+    artist: 'HyperPulse',
+    bpm: 136,
+    durationSeconds: 105,
+    difficulty: 'MEDIUM',
+    scale: [58, 61, 63, 65, 68, 70, 73],
+    colorTheme: {
+      primary: '#7928ca',
+      secondary: '#ff0080',
+      backgroundTop: '#0d0221',
+      backgroundBottom: '#240b4a',
+      fogColor: 0x11042c,
+    },
+  },
+  {
+    id: 'synthwave-odyssey',
+    title: 'Cosmic Overdrive',
+    artist: 'StarSurfer',
+    bpm: 144,
+    durationSeconds: 110,
+    difficulty: 'HARD',
+    scale: [62, 65, 67, 69, 72, 74, 77],
+    colorTheme: {
+      primary: '#00f0ff',
+      secondary: '#ff007f',
+      backgroundTop: '#040d21',
+      backgroundBottom: '#071f45',
+      fogColor: 0x05132d,
+    },
+  },
+  {
+    id: 'arcade-velocity',
+    title: 'Velocity Inferno',
+    artist: 'SubZero Apex',
+    bpm: 154,
+    durationSeconds: 90,
+    difficulty: 'EXPERT',
+    scale: [57, 60, 62, 64, 67, 69, 72],
+    colorTheme: {
+      primary: '#ff3b30',
+      secondary: '#ffcc00',
+      backgroundTop: '#1a0505',
+      backgroundBottom: '#380a0a',
+      fogColor: 0x1f0707,
+    },
+  },
+];
