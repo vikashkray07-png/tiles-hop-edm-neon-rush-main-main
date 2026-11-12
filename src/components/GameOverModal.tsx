@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { RotateCcw, Home, ArrowRight, Target } from 'lucide-react';
+import { RotateCcw, Home, ArrowRight, Target, PlayCircle } from 'lucide-react';
 import { GameStats, LevelConfig } from '../types/game';
 
 interface GameOverModalProps {
@@ -8,6 +8,8 @@ interface GameOverModalProps {
   currentLevel: LevelConfig;
   isVictory: boolean;
   onPlayAgain: () => void;
+  onRevive?: () => void;
+  isReviving?: boolean;
   onNextLevel?: () => void;
   onGoHome: () => void;
 }
@@ -17,6 +19,8 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   currentLevel,
   isVictory,
   onPlayAgain,
+  onRevive,
+  isReviving = false,
   onNextLevel,
   onGoHome,
 }) => {
@@ -106,6 +110,17 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             >
               <span>NEXT TARGET</span>
               <ArrowRight className="w-5 h-5" />
+            </button>
+          ) : null}
+
+          {!isVictory && onRevive ? (
+            <button
+              onClick={onRevive}
+              disabled={isReviving}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:via-orange-400 hover:to-pink-400 disabled:opacity-60 text-black font-extrabold text-base tracking-wider shadow-[0_0_25px_rgba(255,160,0,0.35)] transition-all flex items-center justify-center gap-2"
+            >
+              <PlayCircle className="w-5 h-5" />
+              <span>{isReviving ? 'LOADING AD…' : 'WATCH AD TO REVIVE'}</span>
             </button>
           ) : null}
 

@@ -1,6 +1,6 @@
 name: Build Tiles Hop Android APK
 
-on: [workflow_dispatch]
+on: [workflow_dispatch, pull_request]
 
 permissions:
   contents: read
