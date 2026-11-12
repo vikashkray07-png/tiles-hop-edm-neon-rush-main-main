@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GameEngine } from './game/GameEngine';
-import { initializeTestAds, showRewardedTestAd, showInterstitialTestAd } from './lib/admob;
+import { initializeTestAds, showRewardedTestAd, showInterstitialTestAd } from './lib/admob';
 import { GameHUD } from './components/GameHUD';
 import { TitleScreen } from './components/TitleScreen';
 import { GameOverModal } from './components/GameOverModal';
