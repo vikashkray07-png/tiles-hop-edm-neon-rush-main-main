@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GameEngine } from './game/GameEngine';
-import { initializeTestAds, showRewardedTestAd, showInterstitialTestAd } from './lib/admob';
+import { initializeTestAds, prepareInterstitialTestAd, showRewardedTestAd, showInterstitialTestAd } from './lib/admob';
 import { GameHUD } from './components/GameHUD';
 import { TitleScreen } from './components/TitleScreen';
 import { GameOverModal } from './components/GameOverModal';
@@ -48,6 +48,12 @@ export default function App() {
   // Online / Offline state. Android WebView can report navigator.onLine=true
   // even when mobile data/Wi-Fi has no internet, so confirm reachability too.
   const [isOnline, setIsOnline] = useState<boolean>(false);
+
+  // Keep one interstitial preloaded only while internet is reachable.
+  // Level completion itself must never start a network load.
+  useEffect(() => {
+    if (isOnline) void prepareInterstitialTestAd();
+  }, [isOnline]);
   useEffect(() => {
     let disposed = false;
     let probeInFlight = false;
