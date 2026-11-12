@@ -144,15 +144,4 @@ export const BALL_SKINS: BallSkin[] = [
   },
 ];
 
-// Restore saved rewarded-ad progress (for example 1/2) after the app restarts.
-try {
-  const savedAds = JSON.parse(localStorage.getItem('going_hop_skin_ads') || '{}');
-  BALL_SKINS.forEach((skin) => {
-    const watched = Number(savedAds[skin.id]);
-    if (skin.unlockType === 'ads' && Number.isFinite(watched) && watched > 0) {
-      skin.adsWatched = Math.min(watched, skin.adsRequired || 2);
-    }
-  });
-} catch {
-  // ignore
-}
+// Premium ad skins remain locked until a new Ads system is integrated.
